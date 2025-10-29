@@ -140,3 +140,51 @@ class Database(QObject):
                 conn.close()
         finally:
             self.lock.unlock()
+
+    def delete_name(self, name):
+
+        if not name or not name.strip():
+            print("软件名称不能为空")
+            return False
+        
+        self.lock.lock()
+        try:
+            conn = sqlite3.connect(self.path)
+            cursor = conn.cursor()
+            try:
+                # 首先查找软件ID
+                cursor.execute("SELECT id FROM software WHERE name = ?", (name.strip(),))
+                result = cursor.fetchone()
+                
+                if not result:
+                    print(f"软件 '{name}' 不存在")
+                    return False
+                
+                software_id = result[0]
+                
+                # 删除相关的快捷键记录
+                cursor.execute("DELETE FROM shortcut WHERE software_id = ?", (software_id,))
+                deleted_shortcuts = cursor.rowcount
+                
+                # 删除软件记录
+                cursor.execute("DELETE FROM software WHERE id = ?", (software_id,))
+                deleted_software = cursor.rowcount
+                
+                conn.commit()
+                
+                if deleted_software > 0:
+                    print(f"成功删除软件 '{name}' 及其 {deleted_shortcuts} 条快捷键记录")
+                    return True
+                else:
+                    print(f"删除软件 '{name}' 失败")
+                    return False
+                    
+            except Exception as e:
+                conn.rollback()
+                print(f"删除软件时出错: {e}")
+                return False
+            finally:
+                cursor.close()
+                conn.close()
+        finally:
+            self.lock.unlock()
