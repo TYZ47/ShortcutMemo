@@ -6,6 +6,7 @@ class Config:
     _instance = None
 
     _config = {
+        "test": "我是测试文本",
     }
 
     def __new__(cls):
@@ -34,5 +35,3 @@ class Config:
     @classmethod
     def resetOverrideCursor(cls):
         QApplication.restoreOverrideCursor()
-
-
