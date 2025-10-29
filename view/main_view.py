@@ -1,7 +1,7 @@
 
 from PyQt5.QtWidgets import QMainWindow
 from ui.main import Ui_Main
-from utils import Config
+from utils import Config, Database,Project
 
 
 class MainView(QMainWindow, Ui_Main):
@@ -9,7 +9,12 @@ class MainView(QMainWindow, Ui_Main):
         super().__init__(parent)
         self.setupUi(self)
 
+        self.__init_confit()
+
         self.init_ui()
+
+    def __init_confit(self):
+        Database.getInstance()
     
     def init_ui(self):
         self.action_test1.triggered.connect(self.handle_test1)
@@ -20,6 +25,7 @@ class MainView(QMainWindow, Ui_Main):
     
     def handle_test2(self):
         print("test2")  
+        print(Project.get_project_path())
 
     def handle_show(self):
         self.show()
