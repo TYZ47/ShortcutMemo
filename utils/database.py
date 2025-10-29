@@ -32,57 +32,111 @@ class Database(QObject):
         self.path = Project.get_path('data')  # 实际是sqlite3类型
         self.lock = QMutex()
 
-
-
         self._initialized = True
         self.init_db()
 
     @classmethod
     def getInstance(cls):
-
         return cls()
 
     def init_db(self):
         """初始化数据库，如果数据库不存在则创建"""
         # 获取数据库文件路径
         db_dir = os.path.dirname(self.path)
-        
+
         # 如果目录不存在，创建目录
         if db_dir and not os.path.exists(db_dir):
             os.makedirs(db_dir, exist_ok=True)
-        
+
         # 检查数据库文件是否存在
         db_exists = os.path.exists(self.path)
-        
+
         # 连接数据库
         conn = sqlite3.connect(self.path)
         cursor = conn.cursor()
-        
+
         try:
-            # 创建基础表结构
+            # 创建软件表
             cursor.execute('''
-                CREATE TABLE IF NOT EXISTS shortcuts (
+                CREATE TABLE IF NOT EXISTS software (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT NOT NULL,
-                    shortcut TEXT,
-                    description TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    name TEXT NOT NULL
+                )
+            ''')
+
+            # 创建快捷键表
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS shortcut (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    software_id INTEGER NOT NULL,
+                    function TEXT NOT NULL,
+                    keys TEXT NOT NULL,
+                    note TEXT,
+                    FOREIGN KEY (software_id) REFERENCES software (id)
                 )
             ''')
             conn.commit()
-            
+
             if not db_exists:
                 print(f"数据库已创建: {self.path}")
             else:
                 print(f"数据库已存在: {self.path}")
-                
+
         except Exception as e:
             print(f"初始化数据库时出错: {e}")
         finally:
             cursor.close()
             conn.close()
 
+    def get_name_list(self):
 
+        self.lock.lock()
+        try:
+            conn = sqlite3.connect(self.path)
+            cursor = conn.cursor()
+            try:
+                cursor.execute("SELECT name FROM software ORDER BY id")
+                results = cursor.fetchall()
+                # 返回名称列表（去掉元组包装）
+                return [row[0] for row in results]
+            finally:
+                cursor.close()
+                conn.close()
+        except Exception as e:
+            print(f"获取软件名称列表时出错: {e}")
+            return []
+        finally:
+            self.lock.unlock()
 
+    def insert_name(self, name):
 
+        if not name or not name.strip():
+            print("软件名称不能为空")
+            return False
+
+        self.lock.lock()
+        try:
+            conn = sqlite3.connect(self.path)
+            cursor = conn.cursor()
+            try:
+                # 检查是否已存在相同的名称
+                cursor.execute(
+                    "SELECT id FROM software WHERE name = ?", (name.strip(),))
+                if cursor.fetchone():
+                    print(f"软件名称 '{name}' 已存在")
+                    return False
+
+                # 插入新名称
+                cursor.execute(
+                    "INSERT INTO software (name) VALUES (?)", (name.strip(),))
+                conn.commit()
+                return True
+            except Exception as e:
+                conn.rollback()
+                print(f"插入软件名称时出错: {e}")
+                return False
+            finally:
+                cursor.close()
+                conn.close()
+        finally:
+            self.lock.unlock()
