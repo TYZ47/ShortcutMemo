@@ -1,6 +1,7 @@
 
-from PyQt5.QtWidgets import QMainWindow, QMenu, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QMenu, QMessageBox, QTableWidgetItem
 from PyQt5.QtCore import Qt
+from PyQt5 import QtWidgets
 from ui.main import Ui_Main
 from utils import Config, Database, Project
 from view.add_name_view import AddNameView
@@ -18,6 +19,7 @@ class MainView(QMainWindow, Ui_Main):
         Database.getInstance()
     
     def init_ui(self):
+        self.shortcut_info = []
         self.action_test1.triggered.connect(self.handle_test1)
         self.action_test2.triggered.connect(self.handle_test2)
         self.btn_add_name.clicked.connect(self.add_name)
@@ -90,8 +92,51 @@ class MainView(QMainWindow, Ui_Main):
         pass
 
     def open_software(self):
-        print('open software')
-        pass
+        current_item = self.lw_software_name.currentItem()
+        if current_item:
+            software_name = current_item.text()
+            software_id = Database.getInstance().get_id_by_name(software_name)
+
+            shortcut_info = Database.getInstance().get_shortcut_info_by_id(software_id)
+            self.shortcut_info = shortcut_info
+            print('shortcut_info', shortcut_info)
+            self.sw_main.setCurrentIndex(1)
+    
+    def refresh_shortcut_table(self):
+        """刷新快捷键表格"""
+        # 清空表格
+        self.tw_shortcut.clear()
+        self.tw_shortcut.setRowCount(0)
+        
+        # 设置列数和列标题
+        self.tw_shortcut.setColumnCount(2)
+        self.tw_shortcut.setHorizontalHeaderLabels(["Function", "Keys"])
+        
+        # 设置行数
+        row_count = len(self.shortcut_info)
+        self.tw_shortcut.setRowCount(row_count)
+        
+        # 填充数据
+        for row, (function, keys, note) in enumerate(self.shortcut_info):
+            # function 列
+            function_item = QtWidgets.QTableWidgetItem(function if function else "")
+            self.tw_shortcut.setItem(row, 0, function_item)
+            
+            # keys 列
+            keys_item = QtWidgets.QTableWidgetItem(keys if keys else "")
+            self.tw_shortcut.setItem(row, 1, keys_item)
+        
+        # 设置列宽比例为 2:1
+        header = self.tw_shortcut.horizontalHeader()
+        total_width = self.tw_shortcut.width()
+        if total_width > 0:
+            self.tw_shortcut.setColumnWidth(0, int(total_width * 2 / 3))
+            self.tw_shortcut.setColumnWidth(1, int(total_width * 1 / 3))
+        else:
+            # 如果表格还没有宽度，设置拉伸模式
+            header.setStretchLastSection(False)
+            header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+            header.setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
 
     def handle_show(self):
         self.show()

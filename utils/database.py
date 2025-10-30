@@ -188,3 +188,67 @@ class Database(QObject):
                 conn.close()
         finally:
             self.lock.unlock()
+
+    def get_id_by_name(self, name):
+
+        if not name or not name.strip():
+            print("软件名称不能为空")
+            return None
+        
+        self.lock.lock()
+        try:
+            conn = sqlite3.connect(self.path)
+            cursor = conn.cursor()
+            try:
+                cursor.execute("SELECT id FROM software WHERE name = ?", (name.strip(),))
+                result = cursor.fetchone()
+                
+                if result:
+                    return result[0]
+                else:
+                    return None
+            except Exception as e:
+                print(f"根据名称查找ID时出错: {e}")
+                return None
+            finally:
+                cursor.close()
+                conn.close()
+        finally:
+            self.lock.unlock()
+    
+    def get_shortcut_info_by_id(self, software_id):
+        """
+        根据软件ID获取快捷键信息
+        
+        Args:
+            software_id: 软件ID
+            
+        Returns:
+            list: 包含(function, keys, note)元组的列表
+        """
+        if not software_id:
+            print("软件ID不能为空")
+            return []
+        
+        self.lock.lock()
+        try:
+            conn = sqlite3.connect(self.path)
+            cursor = conn.cursor()
+            try:
+                cursor.execute("""
+                    SELECT function, keys, note 
+                    FROM shortcut 
+                    WHERE software_id = ? 
+                    ORDER BY id
+                """, (software_id,))
+                
+                results = cursor.fetchall()
+                return results
+            except Exception as e:
+                print(f"根据软件ID获取快捷键信息时出错: {e}")
+                return []
+            finally:
+                cursor.close()
+                conn.close()
+        finally:
+            self.lock.unlock()
