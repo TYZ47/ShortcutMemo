@@ -252,3 +252,7 @@ class Database(QObject):
                 conn.close()
         finally:
             self.lock.unlock()
+
+    def insert_shortcut(self, software_id, function, shortcut, note):
+        # todo 完成我的这个函数，点击添加的时候，能成功添加快捷键
+        pass

@@ -33,7 +33,7 @@
     <item>
      <widget class="QStackedWidget" name="sw_main">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="page_name">
        <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -90,6 +90,26 @@
             <widget class="QPushButton" name="btn_home">
              <property name="text">
               <string>Home</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_5">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QLabel" name="lb_software_name">
+             <property name="text">
+              <string>software name</string>
              </property>
             </widget>
            </item>

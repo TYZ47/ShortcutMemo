@@ -5,6 +5,7 @@ from PyQt5 import QtWidgets
 from ui.main import Ui_Main
 from utils import Config, Database, Project
 from view.add_name_view import AddNameView
+from view.add_shortcut import AddShortcutView
 
 class MainView(QMainWindow, Ui_Main):
     def __init__(self, parent=None):
@@ -19,7 +20,9 @@ class MainView(QMainWindow, Ui_Main):
         Database.getInstance()
     
     def init_ui(self):
+        self.sw_main.setCurrentIndex(0)
         self.shortcut_info = []
+        self.software_id = None
         self.action_test1.triggered.connect(self.handle_test1)
         self.action_test2.triggered.connect(self.handle_test2)
         self.btn_add_name.clicked.connect(self.add_name)
@@ -31,6 +34,9 @@ class MainView(QMainWindow, Ui_Main):
         self.lw_software_name.customContextMenuRequested.connect(self.show_context_menu)
         
         self.lw_software_name.itemDoubleClicked.connect(self.open_software)
+        self.btn_home.clicked.connect(self.back_to_home)
+        self.btn_add_shortcut.clicked.connect(self.add_shortcut)
+
     def handle_test1(self):
         print(Config.get_data("test"))        
     
@@ -98,9 +104,28 @@ class MainView(QMainWindow, Ui_Main):
             software_id = Database.getInstance().get_id_by_name(software_name)
 
             shortcut_info = Database.getInstance().get_shortcut_info_by_id(software_id)
+            self.software_id = software_id
             self.shortcut_info = shortcut_info
             print('shortcut_info', shortcut_info)
             self.sw_main.setCurrentIndex(1)
+            self.lb_software_name.setText(software_name)
+    
+    def back_to_home(self):
+        self.sw_main.setCurrentIndex(0)
+        self.lb_software_name.setText("")
+    
+    def add_shortcut(self):
+        self.add_shortcut_view = AddShortcutView()
+        self.add_shortcut_view.add_shortcut_signal.connect(self.add_shortcut_signal)
+        self.add_shortcut_view.handle_show()
+    
+    def add_shortcut_signal(self, data):
+        print('data', data)
+        function = data['function']
+        shortcut = data['shortcut']
+        note = data['note']
+        Database.getInstance().insert_shortcut(self.software_id, function, shortcut, note)
+        self.refresh_shortcut_table()
     
     def refresh_shortcut_table(self):
         """刷新快捷键表格"""
