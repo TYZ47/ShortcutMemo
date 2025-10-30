@@ -254,5 +254,92 @@ class Database(QObject):
             self.lock.unlock()
 
     def insert_shortcut(self, software_id, function, shortcut, note):
-        # todo 完成我的这个函数，点击添加的时候，能成功添加快捷键
-        pass
+
+        if not software_id:
+            print("软件ID不能为空")
+            return False
+        
+        if not function or not function.strip():
+            print("功能名称不能为空")
+            return False
+        
+        if not shortcut or not shortcut.strip():
+            print("快捷键不能为空")
+            return False
+        
+        self.lock.lock()
+        try:
+            conn = sqlite3.connect(self.path)
+            cursor = conn.cursor()
+            try:
+                # 检查是否已存在相同的快捷键
+                cursor.execute("""
+                    SELECT id FROM shortcut 
+                    WHERE software_id = ? AND function = ? AND keys = ?
+                """, (software_id, function.strip(), shortcut.strip()))
+                
+                if cursor.fetchone():
+                    print(f"快捷键 '{function} - {shortcut}' 已存在")
+                    return False
+                
+                # 插入新快捷键
+                cursor.execute("""
+                    INSERT INTO shortcut (software_id, function, keys, note) 
+                    VALUES (?, ?, ?, ?)
+                """, (software_id, function.strip(), shortcut.strip(), note.strip() if note else ""))
+                conn.commit()
+                print(f"成功添加快捷键: {function} - {shortcut}")
+                return True
+            except Exception as e:
+                conn.rollback()
+                print(f"添加快捷键时出错: {e}")
+                return False
+            finally:
+                cursor.close()
+                conn.close()
+        finally:
+            self.lock.unlock()
+
+    def get_shortcut_name_by_id(self, software_id: int) -> list:
+        """根据软件ID获取快捷键名称列表"""
+        if not software_id:
+            return []
+        
+        self.lock.lock()
+        try:
+            conn = sqlite3.connect(self.path)
+            cursor = conn.cursor()
+            try:
+                cursor.execute("SELECT function FROM shortcut WHERE software_id = ?", (software_id,))
+                return [row[0] for row in cursor.fetchall()]
+            finally:
+                cursor.close()
+                conn.close()
+        except Exception as e:
+            print(f"获取快捷键名称列表时出错: {e}")
+            return []
+        finally:
+            self.lock.unlock()
+    
+    def delete_shortcut(self, software_id, function):
+        """删除指定的快捷键"""
+        if not software_id or not function:
+            return False
+        
+        self.lock.lock()
+        try:
+            conn = sqlite3.connect(self.path)
+            cursor = conn.cursor()
+            try:
+                cursor.execute("DELETE FROM shortcut WHERE software_id = ? AND function = ?", (software_id, function))
+                conn.commit()
+                return cursor.rowcount > 0
+            except Exception as e:
+                conn.rollback()
+                print(f"删除快捷键时出错: {e}")
+                return False
+            finally:
+                cursor.close()
+                conn.close()
+        finally:
+            self.lock.unlock()

@@ -10,9 +10,10 @@ from utils import Database
 
 class AddShortcutView(QDialog, Ui_AddShortcut):
     add_shortcut_signal = pyqtSignal(dict)
-    def __init__(self, parent=None):
+    def __init__(self, software_id: int, parent=None):
         super(AddShortcutView, self).__init__(parent)
         self.setupUi(self)
+        self.software_id = software_id
         self.__init_ui()
 
     
@@ -43,6 +44,12 @@ class AddShortcutView(QDialog, Ui_AddShortcut):
         function = self.le_function.text().strip()
         shortcut = self.le_shortcut.text().strip()
         note = self.te_note.toPlainText().strip()
+        shortcut_name_list = Database.getInstance().get_shortcut_name_by_id(self.software_id)
+        if function in shortcut_name_list:
+            QMessageBox.warning(self, "", "功能名称已存在")
+            self.le_function.setFocus()
+            return
+
 
         if not function:
             QMessageBox.warning(self, "输入错误", "Function 不能为空")
