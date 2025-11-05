@@ -138,6 +138,20 @@
              </property>
             </spacer>
            </item>
+           <item>
+            <widget class="QPushButton" name="btn_show_all">
+             <property name="text">
+              <string>Show all</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btn_hide_all">
+             <property name="text">
+              <string>Hide all</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
         </item>
@@ -186,24 +200,6 @@
      </widget>
     </item>
    </layout>
-  </widget>
-  <widget class="QMenuBar" name="menuBar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>800</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <widget class="QMenu" name="menutest">
-    <property name="title">
-     <string>test</string>
-    </property>
-    <addaction name="action_test1"/>
-    <addaction name="action_test2"/>
-   </widget>
-   <addaction name="menutest"/>
   </widget>
   <action name="action_test1">
    <property name="text">

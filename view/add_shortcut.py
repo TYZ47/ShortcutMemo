@@ -10,7 +10,7 @@ from utils import Database
 
 
 
-# TODO 当我焦点在le_shortcut的时候，我在键盘上无论按下什么键，都用一个函数把它显示出来
+# 已实现：当焦点在le_shortcut时，捕获键盘输入并显示快捷键
 
 
 class AddShortcutView(QDialog, Ui_AddShortcut):
@@ -32,6 +32,11 @@ class AddShortcutView(QDialog, Ui_AddShortcut):
 
         # 为快捷键输入框安装事件过滤器以捕获键盘输入
         self.le_shortcut.installEventFilter(self)
+        
+        # 快捷键分隔符
+        self.shortcut_separator = ", "
+        # 最多支持的快捷键数量
+        self.max_shortcuts = 5
 
         
 
@@ -75,7 +80,11 @@ class AddShortcutView(QDialog, Ui_AddShortcut):
             'note': note
         })
 
-        self.close()
+        self.le_function.clear()
+        self.le_shortcut.clear()
+        self.te_note.clear()
+        self.le_function.setFocus()
+
 
     # --- 键盘捕获与显示 ---
     def eventFilter(self, obj, event):
@@ -105,6 +114,25 @@ class AddShortcutView(QDialog, Ui_AddShortcut):
         text = sequence.toString(QKeySequence.NativeText)
         # 若生成结果为空（极少见），则不修改
         if text:
-            self.le_shortcut.setText(text)
+            current_text = self.le_shortcut.text().strip()
+            
+            # 统计当前已有的快捷键数量（通过分隔符计数）
+            if current_text:
+                shortcuts = [s.strip() for s in current_text.split(self.shortcut_separator) if s.strip()]
+            else:
+                shortcuts = []
+            
+            # 检查是否已达到最大数量限制
+            if len(shortcuts) >= self.max_shortcuts:
+                QMessageBox.warning(self, "提示", f"最多只能添加 {self.max_shortcuts} 个快捷键")
+                return True
+            
+            # 如果当前文本不为空，追加新的快捷键；否则直接设置
+            if current_text:
+                new_text = current_text + self.shortcut_separator + text
+            else:
+                new_text = text
+            
+            self.le_shortcut.setText(new_text)
 
         return True

@@ -23,8 +23,7 @@ class MainView(QMainWindow, Ui_Main):
         self.sw_main.setCurrentIndex(0)
         self.shortcut_info = []
         self.software_id = None
-        self.action_test1.triggered.connect(self.handle_test1)
-        self.action_test2.triggered.connect(self.handle_test2)
+
         self.btn_add_name.clicked.connect(self.add_name)
 
         self.refresh_software_list()
@@ -41,12 +40,8 @@ class MainView(QMainWindow, Ui_Main):
         self.tw_shortcut.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.tw_shortcut.itemClicked.connect(self.handle_item_clicked)
 
-    def handle_test1(self):
-        print(Config.get_data("test"))
-
-    def handle_test2(self):
-        print('--------')
-        print(Database.getInstance().get_name_list())
+        self.btn_show_all.clicked.connect(self.show_all)
+        self.btn_hide_all.clicked.connect(self.hide_all)
 
     def add_name(self):
         self.add_name_view = AddNameView()
@@ -126,19 +121,29 @@ class MainView(QMainWindow, Ui_Main):
         self.add_shortcut_view.add_shortcut_signal.connect(
             self.add_shortcut_signal)
         self.add_shortcut_view.handle_show()
-    
+
     def delete_shortcut(self):
         current_item = self.tw_shortcut.currentItem()
         if current_item:
-            row = current_item.row()
-            function_item = self.tw_shortcut.item(row, 0)  # 获取这一行的第一列
-            if function_item:
-                function = function_item.text()
-                success = Database.getInstance().delete_shortcut(self.software_id, function)
-                if success:
-                    self.refresh_shortcut_table()
-                else:
-                    QMessageBox.warning(self, "删除失败", "删除快捷键失败")
+
+            # todo 提示用户是否删除
+            reply = QMessageBox.question(
+                self,
+                "确认删除",
+                f"确定要删除快捷键 '{current_item.text()}' 吗？",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No
+            )
+            if reply == QMessageBox.Yes:
+                row = current_item.row()
+                function_item = self.tw_shortcut.item(row, 0)  # 获取这一行的第一列
+                if function_item:
+                    function = function_item.text()
+                    success = Database.getInstance().delete_shortcut(self.software_id, function)
+                    if success:
+                        self.refresh_shortcut_table()
+                    else:
+                        QMessageBox.warning(self, "删除失败", "删除快捷键失败")
 
     def add_shortcut_signal(self, data):
         print('data', data)
@@ -190,14 +195,57 @@ class MainView(QMainWindow, Ui_Main):
             header.setStretchLastSection(False)
             header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
             header.setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
-        
-
-
-
-            
 
     def handle_item_clicked(self, item):
-        print('item', item)
+        """当点击快捷键表格中的某一行时，将该行选中（当这行的keys被清空时，这行的keys会显示出来）"""
+        row = item.row()
+        
+        # 选中整行
+        self.tw_shortcut.selectRow(row)
+        
+        # 如果这行的keys被清空了，需要恢复显示
+        keys_item = self.tw_shortcut.item(row, 1)
+        if keys_item and not keys_item.text().strip():
+            # 获取该行的function
+            function_item = self.tw_shortcut.item(row, 0)
+            if function_item:
+                function = function_item.text()
+                # 从shortcut_info中找到对应的keys
+                for func, keys, note in self.shortcut_info:
+                    if func == function:
+                        keys_item.setText(keys if keys else "")
+                        break
+
+    def show_all(self):
+        """显示所有快捷键，第二列全部显示出来"""
+        # 遍历所有行，恢复keys列的内容
+        for row in range(self.tw_shortcut.rowCount()):
+            function_item = self.tw_shortcut.item(row, 0)
+            if function_item:
+                function = function_item.text()
+                # 从shortcut_info中找到对应的keys
+                for func, keys, note in self.shortcut_info:
+                    if func == function:
+                        keys_item = self.tw_shortcut.item(row, 1)
+                        if keys_item:
+                            keys_item.setText(keys if keys else "")
+                        else:
+                            # 如果keys_item不存在，创建一个
+                            keys_item = QtWidgets.QTableWidgetItem(keys if keys else "")
+                            self.tw_shortcut.setItem(row, 1, keys_item)
+                        break
+
+    def hide_all(self):
+        """隐藏所有快捷键，只显示第一列（Function），第二列（Keys）清空"""
+        # 遍历所有行，清空keys列的内容
+        for row in range(self.tw_shortcut.rowCount()):
+            keys_item = self.tw_shortcut.item(row, 1)
+            if keys_item:
+                keys_item.setText("")
+            else:
+                # 如果keys_item不存在，创建一个空项
+                keys_item = QtWidgets.QTableWidgetItem("")
+                self.tw_shortcut.setItem(row, 1, keys_item)
 
     def handle_show(self):
         self.show()
