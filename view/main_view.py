@@ -36,9 +36,10 @@ class MainView(QMainWindow, Ui_Main):
         self.lw_software_name.itemDoubleClicked.connect(self.open_software)
         self.btn_home.clicked.connect(self.back_to_home)
         self.btn_add_shortcut.clicked.connect(self.add_shortcut)
-        self.btn_delete.clicked.connect(self.delete_shortcut)
         self.tw_shortcut.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.tw_shortcut.itemClicked.connect(self.handle_item_clicked)
+        self.tw_shortcut.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tw_shortcut.customContextMenuRequested.connect(self.show_shortcut_context_menu)
 
         self.btn_show_all.clicked.connect(self.show_all)
         self.btn_hide_all.clicked.connect(self.hide_all)
@@ -144,6 +145,21 @@ class MainView(QMainWindow, Ui_Main):
                         self.refresh_shortcut_table()
                     else:
                         QMessageBox.warning(self, "删除失败", "删除快捷键失败")
+
+    def show_shortcut_context_menu(self, position):
+        """显示快捷键表格的右键菜单"""
+        item = self.tw_shortcut.itemAt(position)
+        if item is None:
+            return
+
+        # 确保当前选中项是右键点击的行
+        self.tw_shortcut.setCurrentItem(item)
+        self.tw_shortcut.selectRow(item.row())
+
+        context_menu = QMenu(self)
+        delete_action = context_menu.addAction("Delete")
+        delete_action.triggered.connect(self.delete_shortcut)
+        context_menu.exec_(self.tw_shortcut.viewport().mapToGlobal(position))
 
     def add_shortcut_signal(self, data):
         print('data', data)

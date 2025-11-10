@@ -9,8 +9,7 @@ from ui.add_shortcut import Ui_AddShortcut
 from utils import Database
 
 
-
-# 已实现：当焦点在le_shortcut时，捕获键盘输入并显示快捷键
+# todo 我想删除的功能，从btn_delete按钮，移动到tw_shortcut的右键，
 
 
 class AddShortcutView(QDialog, Ui_AddShortcut):
