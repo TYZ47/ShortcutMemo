@@ -13,6 +13,7 @@ class Broadcast(QObject):
 
     __instance = None
 
+
     @classmethod
     def getInstance(cls):
         if not cls.__instance:
